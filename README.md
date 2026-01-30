@@ -17,7 +17,7 @@ A macOS desktop application for analyzing bitrate variations in ProRes video fil
 
 ## Installation
 
-1. Download the latest release from [Releases](https://github.com/YOUR_USERNAME/prores-bitrate-analyzer/releases)
+1. Download the latest release from [Releases](https://github.com/mattrb/prores-bitrate-analyzer/releases)
 2. Mount the DMG file
 3. Drag ProRes Bitrate Analyzer.app to Applications
 4. Install FFmpeg: `brew install ffmpeg`

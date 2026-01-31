@@ -21,27 +21,36 @@
 
 ---
 
-## 🎯 Immediate Priority (v1.1.0 - Next Release)
+## ✅ In Progress (v1.1.0 - Current Development)
 
-**Target: 1-2 weeks**
+**Target: Today/Tomorrow**
 
-### User Experience
+### Performance Improvements ✅ COMPLETED
+- [x] NumPy convolution for windowing (50x faster)
+- [x] List comprehensions for Pythonic code
+- [x] Optimized bitrate calculations
+
+### New Features ✅ COMPLETED
+- [x] Export graph as image (PNG/PDF/SVG)
+- [x] High-resolution graph export (300 DPI)
+- [x] Version number in window title
+
+### User Experience (Next)
 - [ ] Loading splash screen (8-second startup feedback)
 - [ ] Custom app icon (.icns file)
 - [ ] Better error messages for users
 - [ ] Progress feedback during long analyses
 
-### Documentation
-- [ ] User guide in docs/
+### Documentation (Next)
+- [ ] Update README with v1.1.0 features
 - [ ] Screenshots for README
-- [ ] Video demo/tutorial
-- [ ] Troubleshooting guide
+- [ ] User guide in docs/
+- [ ] Changelog.md file
 
-### Code Quality
+### Code Quality (Next)
 - [ ] Add comments to complex sections
-- [ ] Extract VideoAnalyzer into separate file
-- [ ] Extract BitrateChart into separate file
-- [ ] Basic error logging to file
+- [ ] Update requirements.txt if needed
+- [ ] Test with various video formats
 
 ---
 
@@ -49,20 +58,28 @@
 
 **Target: 1-2 months**
 
-### v1.2.0 - Batch Processing
+### v1.2.0 - VFR & Long Video Support
+- [ ] Variable frame rate (VFR) handling
+- [ ] Accurate bitrate for VFR videos
+- [ ] Frame sampling for 2+ hour videos
+- [ ] Memory-efficient parsing
+- [ ] Warning when sampling is used
+
+### v1.3.0 - Batch Processing
 - [ ] Batch processing (analyze multiple files)
 - [ ] Queue management interface
 - [ ] Batch export (combined report)
 - [ ] Progress indicator for batch jobs
 
-### v1.3.0 - Enhanced Export
+### v1.4.0 - Enhanced Export & Analysis
 - [ ] CSV export option
 - [ ] Excel export with formatting
-- [ ] Export graph as PNG/PDF/SVG
+- [x] Export graph as PNG/PDF/SVG ✅ (moved to v1.1.0)
 - [ ] Copy statistics to clipboard
-- [ ] Custom export templates
+- [ ] I-frame visualization toggle
+- [ ] Frame-type specific statistics (I vs P frames)
 
-### v1.4.0 - Comparison Mode
+### v1.5.0 - Comparison Mode
 - [ ] Video comparison mode (side-by-side)
 - [ ] Synchronized graph zoom/pan
 - [ ] Difference visualization

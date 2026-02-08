@@ -10,14 +10,65 @@ import subprocess
 from pathlib import Path
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QPushButton, QLabel, QFileDialog, 
-                            QProgressBar, QTextEdit, QSplitter, QGroupBox)
-from PyQt6.QtCore import QThread, pyqtSignal, Qt
-from PyQt6.QtGui import QFont, QPalette, QColor
+                            QProgressBar, QTextEdit, QSplitter, QGroupBox, QSplashScreen)
+from PyQt6.QtCore import QThread, pyqtSignal, Qt, QSettings
+from PyQt6.QtGui import QFont, QPalette, QColor, QPixmap, QPainter, QAction, QKeySequence
 import matplotlib
 matplotlib.use('QtAgg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import numpy as np
+
+
+def create_splash_screen():
+    """
+    Create a splash screen shown during app startup.
+    NEW in v1.2.0: Provides visual feedback during 8-second load time.
+    """
+    # Create a 600x400 splash image
+    splash_pix = QPixmap(600, 400)
+    splash_pix.fill(QColor(30, 30, 30))  # Dark background
+    
+    # Draw on the splash screen
+    painter = QPainter(splash_pix)
+    
+    # Title
+    painter.setPen(QColor(255, 255, 255))
+    title_font = QFont("Arial", 32, QFont.Weight.Bold)
+    painter.setFont(title_font)
+    painter.drawText(splash_pix.rect(), Qt.AlignmentFlag.AlignCenter, 
+                    "ProRes Bitrate Analyzer")
+    
+    # Version
+    painter.setPen(QColor(0, 230, 118))
+    version_font = QFont("Arial", 16)
+    painter.setFont(version_font)
+    painter.drawText(50, 250, "v1.2.0")
+    
+    # Loading message
+    painter.setPen(QColor(200, 200, 200))
+    loading_font = QFont("Arial", 14)
+    painter.setFont(loading_font)
+    painter.drawText(splash_pix.rect().adjusted(0, 100, 0, 0), 
+                    Qt.AlignmentFlag.AlignCenter, 
+                    "Loading components...")
+    
+    # Subtitle
+    painter.setPen(QColor(150, 150, 150))
+    subtitle_font = QFont("Arial", 12)
+    painter.setFont(subtitle_font)
+    painter.drawText(splash_pix.rect().adjusted(0, -80, 0, 0), 
+                    Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignBottom,
+                    "Analyze video bitrate over time")
+    
+    painter.end()
+    
+    # Create splash screen widget
+    splash = QSplashScreen(splash_pix, Qt.WindowType.WindowStaysOnTopHint)
+    splash.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | 
+                         Qt.WindowType.FramelessWindowHint)
+    
+    return splash
 
 
 class VideoAnalyzer(QThread):
@@ -210,10 +261,15 @@ class BitrateChart(FigureCanvas):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("ProRes Bitrate Analyzer v1.1.0")
+        self.setWindowTitle("ProRes Bitrate Analyzer v1.2.0")
         self.setGeometry(100, 100, 1200, 800)
+        
+        # Settings for persistent storage
+        self.settings = QSettings("ProResAnalyzer", "ProResAnalyzer")
+        
         self.set_dark_theme()
         self.init_ui()
+        self.setup_shortcuts()
         self.current_file = None
         self.results = None
         
@@ -233,7 +289,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
         
-        header = QLabel("ProRes Bitrate Analyzer v1.1.0")
+        header = QLabel("ProRes Bitrate Analyzer v1.2.0")
         header.setFont(QFont("Arial", 24, QFont.Weight.Bold))
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(header)
@@ -293,12 +349,58 @@ class MainWindow(QMainWindow):
         button_layout.addWidget(self.export_graph_btn)
         
         layout.addLayout(button_layout)
+    
+    def setup_shortcuts(self):
+        """
+        Setup keyboard shortcuts.
+        NEW in v1.2.0: Added keyboard shortcuts for common actions.
+        """
+        # ⌘O or Ctrl+O - Open file
+        open_action = QAction("Open", self)
+        open_action.setShortcut(QKeySequence.StandardKey.Open)
+        open_action.triggered.connect(self.select_file)
+        self.addAction(open_action)
+        
+        # ⌘E or Ctrl+E - Export data
+        export_action = QAction("Export Data", self)
+        export_action.setShortcut(QKeySequence("Ctrl+E"))
+        export_action.triggered.connect(self.export_data)
+        self.addAction(export_action)
+        
+        # ⌘Shift+E - Export graph
+        export_graph_action = QAction("Export Graph", self)
+        export_graph_action.setShortcut(QKeySequence("Ctrl+Shift+E"))
+        export_graph_action.triggered.connect(self.export_graph)
+        self.addAction(export_graph_action)
+        
+        # ⌘W or Ctrl+W - Close window
+        close_action = QAction("Close", self)
+        close_action.setShortcut(QKeySequence.StandardKey.Close)
+        close_action.triggered.connect(self.close)
+        self.addAction(close_action)
+        
+        # ⌘Q or Ctrl+Q - Quit application
+        quit_action = QAction("Quit", self)
+        quit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        quit_action.triggered.connect(QApplication.quit)
+        self.addAction(quit_action)
         
     def select_file(self):
+        """
+        Open file dialog and start analysis.
+        NEW in v1.2.0: Remembers last used directory.
+        """
+        # Get last used directory from settings
+        last_dir = self.settings.value("last_directory", str(Path.home()))
+        
         filepath, _ = QFileDialog.getOpenFileName(
-            self, "Select ProRes Video File", str(Path.home()),
+            self, "Select ProRes Video File", last_dir,
             "Video Files (*.mov *.mp4 *.mxf);;All Files (*.*)")
+        
         if filepath:
+            # Save directory for next time
+            self.settings.setValue("last_directory", str(Path(filepath).parent))
+            
             self.current_file = filepath
             self.file_label.setText(Path(filepath).name)
             self.analyze_file(filepath)
@@ -373,12 +475,23 @@ I-Frame Interval: {stats['frame_count'] / max(stats['i_frame_count'], 1):.1f} fr
         self.info_text.setPlainText(info)
     
     def export_data(self):
+        """Export analysis results as JSON file."""
         if not self.results:
             return
+        
+        # Get last used directory
+        last_dir = self.settings.value("last_directory", str(Path.home()))
+        default_name = f"bitrate_analysis_{Path(self.current_file).stem}.json"
+        
         filepath, _ = QFileDialog.getSaveFileName(
-            self, "Export Analysis Data", str(Path.home() / "bitrate_analysis.json"),
+            self, "Export Analysis Data", 
+            str(Path(last_dir) / default_name),
             "JSON Files (*.json)")
+        
         if filepath:
+            # Save directory for next time
+            self.settings.setValue("last_directory", str(Path(filepath).parent))
+            
             export_data = {
                 'source_file': self.current_file,
                 'metadata': self.results['metadata'],
@@ -401,25 +514,33 @@ I-Frame Interval: {stats['frame_count'] / max(stats['i_frame_count'], 1):.1f} fr
             self.status_label.setText(f"Data exported to {Path(filepath).name}")
     
     def export_graph(self):
-        """NEW in v1.1.0: Export the current graph as an image file."""
+        """
+        Export the current graph as an image file.
+        NEW in v1.1.0: Export graph feature.
+        NEW in v1.2.0: Remembers last used directory.
+        """
         if not self.results:
             return
         
-        # Default filename based on video file
+        # Get last used directory
+        last_dir = self.settings.value("last_directory", str(Path.home()))
         default_name = f"bitrate_graph_{Path(self.current_file).stem}.png"
         
         filepath, _ = QFileDialog.getSaveFileName(
             self,
             "Export Graph as Image",
-            str(Path.home() / default_name),
+            str(Path(last_dir) / default_name),
             "PNG Image (*.png);;PDF Document (*.pdf);;SVG Vector (*.svg)"
         )
         
         if filepath:
+            # Save directory for next time
+            self.settings.setValue("last_directory", str(Path(filepath).parent))
+            
             try:
                 self.chart.fig.savefig(
                     filepath,
-                    dpi=300,  # High resolution
+                    dpi=300,
                     bbox_inches='tight',
                     facecolor='#2b2b2b'
                 )
@@ -433,13 +554,24 @@ I-Frame Interval: {stats['frame_count'] / max(stats['i_frame_count'], 1):.1f} fr
 def main():
     print(f"DEBUG: Matplotlib backend: {matplotlib.get_backend()}")
     print(f"DEBUG: Matplotlib version: {matplotlib.__version__}")
-    print("DEBUG: ProRes Bitrate Analyzer v1.1.0")
-    print("DEBUG: Improvements: NumPy windowing, list comprehensions, graph export")
+    print("DEBUG: ProRes Bitrate Analyzer v1.2.0")
+    print("DEBUG: New features: Splash screen, keyboard shortcuts, remember directory")
     
     app = QApplication(sys.argv)
     app.setApplicationName("ProRes Bitrate Analyzer")
+    
+    # Create and show splash screen
+    splash = create_splash_screen()
+    splash.show()
+    app.processEvents()
+    
+    # Create main window (this is the slow part)
     window = MainWindow()
+    
+    # Close splash and show main window
+    splash.finish(window)
     window.show()
+    
     sys.exit(app.exec())
 
 

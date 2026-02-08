@@ -99,7 +99,7 @@ print_step "Building application with PyInstaller..."
 echo "This may take a few minutes..."
 pyinstaller --windowed \
   --name "$APP_NAME" \
-  --osx-bundle-identifier=com.local.proresanalyzer \
+  --osx-bundle-identifier=com.local.proresanalyser \
   --hidden-import=PyQt6 \
   --collect-all PyQt6 \
   --add-binary "/opt/homebrew/bin/ffprobe:." \
@@ -183,7 +183,7 @@ if ! command -v gh &> /dev/null; then
     echo "Install with: brew install gh"
     echo ""
     echo "Manual release steps:"
-    echo "1. Go to: https://github.com/mattrb/prores-bitrate-analyzer/releases/new"
+    echo "1. Go to: https://github.com/mattrb/prores-bitrate-analyser/releases/new"
     echo "2. Tag: v${VERSION}"
     echo "3. Upload: $DMG_NAME"
     exit 1
@@ -213,7 +213,7 @@ ${RELEASE_NOTES}
 
 ---
 
-**Full changelog**: https://github.com/mattrb/prores-bitrate-analyzer/compare/v$((${VERSION%.*}.${VERSION##*.}-1))...v${VERSION}
+**Full changelog**: https://github.com/mattrb/prores-bitrate-analyser/compare/v$((${VERSION%.*}.${VERSION##*.}-1))...v${VERSION}
 EOF
 
 gh release create "v${VERSION}" \
@@ -238,7 +238,7 @@ echo "╚═══════════════════════�
 echo ""
 echo "Version:  v${VERSION}"
 echo "DMG:      ${DMG_NAME} (${DMG_SIZE})"
-echo "Release:  https://github.com/mattrb/prores-bitrate-analyzer/releases/tag/v${VERSION}"
+echo "Release:  https://github.com/mattrb/prores-bitrate-analyser/releases/tag/v${VERSION}"
 echo ""
 print_success "All done!"
 
@@ -249,5 +249,5 @@ rm -f build.log
 read -p "Open release page in browser? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    open "https://github.com/mattrb/prores-bitrate-analyzer/releases/tag/v${VERSION}"
+    open "https://github.com/mattrb/prores-bitrate-analyser/releases/tag/v${VERSION}"
 fi

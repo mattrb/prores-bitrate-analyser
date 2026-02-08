@@ -411,11 +411,11 @@ class MainWindow(QMainWindow):
         self.info_text.clear()
         self.export_btn.setEnabled(False)
         self.export_graph_btn.setEnabled(False)
-        self.analyzer = VideoAnalyzer(filepath)
-        self.analyzer.progress.connect(self.update_progress)
-        self.analyzer.finished.connect(self.display_results)
-        self.analyzer.error.connect(self.show_error)
-        self.analyzer.start()
+        self.analyser = VideoAnalyzer(filepath)
+        self.analyser.progress.connect(self.update_progress)
+        self.analyser.finished.connect(self.display_results)
+        self.analyser.error.connect(self.show_error)
+        self.analyser.start()
     
     def update_progress(self, value, message):
         self.progress_bar.setValue(value)

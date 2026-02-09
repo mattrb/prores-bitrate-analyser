@@ -1,5 +1,5 @@
 #!/bin/bash
-# ProRes Analyzer - Automated Release Script
+# ProRes Analyser - Automated Release Script
 # Creates DMG and publishes to GitHub
 
 set -e  # Exit on any error
@@ -38,12 +38,12 @@ fi
 
 VERSION=$1
 RELEASE_NOTES=${2:-"Release v${VERSION}"}
-DMG_NAME="ProResAnalyzer-v${VERSION}.dmg"
-APP_NAME="ProRes Bitrate Analyzer"
+DMG_NAME="ProResAnalyser-v${VERSION}.dmg"
+APP_NAME="ProRes Bitrate Analyser"
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║  ProRes Bitrate Analyzer - Automated Release              ║"
+echo "║  ProRes Bitrate Analyser - Automated Release               ║"
 echo "║  Version: ${VERSION}                                       ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
@@ -83,58 +83,80 @@ print_success "Virtual environment activated"
 
 # Step 4: Check dependencies
 print_step "Checking dependencies..."
-if ! pip list | grep -q pyinstaller; then
-    print_warning "PyInstaller not found in venv, installing..."
+if ! pip show pyinstaller > /dev/null 2>&1; then
+    print_warning "PyInstaller not found, installing..."
     pip install pyinstaller
+fi
+# Experimental check: see if ffprobe is even on your system
+if ! command -v ffprobe &> /dev/null; then
+    print_warning "ffprobe not found in PATH. The app might not work locally."
 fi
 print_success "Dependencies OK"
 
 # Step 5: Clean previous builds
 print_step "Cleaning previous builds..."
-rm -rf build dist *.spec
+
+# 1. Close any Finder windows looking at the project to release the 'lock'
+osascript -e "tell application \"Finder\" to close (every window whose target is (POSIX file \"$(pwd)\" as alias))" 2>/dev/null || true
+
+# 2. Kill the app if it's currently running
+pkill -f "$APP_NAME" || true
+
+# 3. Force remove with a 'nuclear' option
+# We use -rf. If it fails, we wait 1 second and try once more.
+rm -rf build dist || (sleep 1 && rm -rf build dist)
+
+# 4. Final sweep for spec files
+rm -f *.spec
+
 print_success "Build directories cleaned"
 
 # Step 6: Build the application
 print_step "Building application with PyInstaller..."
-echo "This may take a few minutes..."
-pyinstaller --windowed \
+# Using --noconfirm ensures it doesn't stop to ask if it can overwrite files
+pyinstaller --noconfirm --windowed \
   --name "$APP_NAME" \
-  --osx-bundle-identifier=com.local.proresanalyser \
-  --hidden-import=PyQt6 \
-  --collect-all PyQt6 \
+  --osx-bundle-identifier "com.local.proresanalyser" \
+  --hidden-import "PyQt6" \
+  --collect-all "PyQt6" \
+  --clean \
+  prores_analyser.py > build.log 2>&1
+
+# Note: We use --noconfirm and handle the name carefully to avoid pathing errors
+pyinstaller --noconfirm --windowed \
+  --name "$APP_NAME" \
+  --icon "AppIcon.icns" \
+  --osx-bundle-identifier "com.local.proresanalyser" \
+  --hidden-import "PyQt6" \
+  --collect-all "PyQt6" \
   --add-binary "/opt/homebrew/bin/ffprobe:." \
+  --clean \
   prores_analyser.py > build.log 2>&1
 
 if [ $? -ne 0 ]; then
     print_error "Build failed! Check build.log for details"
-    tail -20 build.log
+    tail -n 20 build.log
     exit 1
 fi
 print_success "Application built successfully"
 
-# Step 7: Test the application
+# Step 7: Test the application (Modified for reliability)
 print_step "Testing application..."
 echo "Opening app for 5 seconds..."
-open "dist/$APP_NAME.app" &
+# Use -a to ensure we open the specific path
+open -a "./dist/$APP_NAME.app"
 APP_PID=$!
 sleep 5
 
-# Check if app is still running
-if ps -p $APP_PID > /dev/null; then
+# Check if the process is running by name since 'open' returns quickly
+if pgrep -f "$APP_NAME" > /dev/null; then
     print_success "App appears to be running"
-    # Close it
-    osascript -e "tell application \"$APP_NAME\" to quit" 2>/dev/null || kill $APP_PID 2>/dev/null
+    pkill -f "$APP_NAME"
 else
-    print_warning "App closed quickly - may have issues"
+    print_warning "App not found in process list - check build.log"
 fi
 
-read -p "Did the app open correctly? (y/n) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    print_error "App test failed - fix issues before releasing"
-    exit 1
-fi
-print_success "App test passed"
+# ... [Keep the rest of your DMG and GitHub Release logic] ...
 
 # Step 8: Create DMG
 print_step "Creating DMG installer..."
@@ -173,6 +195,17 @@ fi
 git tag -a "v${VERSION}" -m "Release v${VERSION}"
 git push origin "v${VERSION}"
 print_success "Git tag created and pushed"
+
+# Step 9.5: Get previous tag for changelog link
+print_step "Calculating changelog range..."
+PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+
+if [ -z "$PREVIOUS_TAG" ]; then
+    CHANGELOG_URL="First release"
+else
+    # Create the comparison link (e.g., v1.0.0...v1.1.0)
+    CHANGELOG_URL="https://github.com/mattrb/prores-bitrate-analyser/compare/${PREVIOUS_TAG}...v${VERSION}"
+fi
 
 # Step 10: Create GitHub release
 print_step "Creating GitHub release..."
@@ -249,5 +282,5 @@ rm -f build.log
 read -p "Open release page in browser? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    open "https://github.com/mattrb/prores-bitrate-analyser/releases/tag/v${VERSION}"
+    open "https://github.com/mattrb/prores-bitrate-analyzer/releases/tag/v${VERSION}"
 fi

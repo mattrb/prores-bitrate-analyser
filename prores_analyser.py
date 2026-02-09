@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ProRes Bitrate Analyzer v1.1.0
+ProRes Bitrate Analyzer v1.2.1
 Performance improvements and new features
 """
 
@@ -37,7 +37,7 @@ def create_splash_screen():
     title_font = QFont("Arial", 32, QFont.Weight.Bold)
     painter.setFont(title_font)
     painter.drawText(splash_pix.rect(), Qt.AlignmentFlag.AlignCenter, 
-                    "ProRes Bitrate Analyzer")
+                    "ProRes Bitrate Analyser")
     
     # Version
     painter.setPen(QColor(0, 230, 118))
@@ -160,7 +160,7 @@ class VideoAnalyzer(QThread):
     
     def _calculate_statistics(self, frame_data, metadata):
         """
-        Calculate bitrate statistics using optimized NumPy operations.
+        Calculate bitrate statistics using optimised NumPy operations.
         NEW in v1.1.0: Much faster windowing with NumPy convolution.
         """
         if not frame_data:
@@ -289,7 +289,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout = QVBoxLayout(central_widget)
         
-        header = QLabel("ProRes Bitrate Analyzer v1.2.0")
+        header = QLabel("ProRes Bitrate Analyzer v1.2.1")
         header.setFont(QFont("Arial", 24, QFont.Weight.Bold))
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(header)

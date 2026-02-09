@@ -9,3 +9,4 @@ venv/
 *.zip
 *.mov
 *.mp4
+dist/
